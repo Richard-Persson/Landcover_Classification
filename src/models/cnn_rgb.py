@@ -9,7 +9,7 @@ from src.data_loader import get_dataset, IMG_SIZE, NUM_CLASSES
 
 
 def build_model(input_shape, num_classes):
-    """Defines a simple CNN model for image classification."""
+    """Bygger en sekvensiell CNN modell"""
     model = Sequential([
         Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
         MaxPooling2D((2, 2)),
@@ -29,7 +29,8 @@ def build_model(input_shape, num_classes):
 
 if __name__ == "__main__":
 
-    X_train, X_test, y_train, y_test = get_dataset(channels=3)  # RGB dataset
+    # Definerer trening og test set med get_dataset
+    X_train, X_test, y_train, y_test = get_dataset(channels=3)
 
     model = build_model((IMG_SIZE, IMG_SIZE, 3), NUM_CLASSES)
     model.summary()
@@ -38,8 +39,6 @@ if __name__ == "__main__":
 
     y_pred = model.predict(X_test)
 
-    # If your ground truth labels (y_test) and predictions are one-hot encoded,
-    # convert them to integer labels using np.argmax.
     if y_test.ndim > 1 and y_test.shape[1] > 1:
         y_true_labels = np.argmax(y_test, axis=1)
     else:
