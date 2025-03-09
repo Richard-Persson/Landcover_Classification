@@ -10,7 +10,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 # Load trained model
 def load_model():
-    return tf.keras.models.load_model("models/landcover_cnn.h5")
+    return tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
 
 
 model = load_model()
@@ -28,8 +28,8 @@ if page == "Confusion Matrix":
     st.title("Confusion Matrix & Model Performance")
 
     # Load precomputed test labels & predictions
-    y_true = np.load("models/y_true.npy")   # Ground truth labels
-    y_pred = np.load("models/y_pred.npy")   # Predicted labels
+    y_true = np.load("models/CNN/y_true_rgb.npy")   # Ground truth labels
+    y_pred = np.load("models/CNN/y_pred_rgb.npy")   # Predicted labels
 
     # Compute confusion matrix
     cm = confusion_matrix(y_true, y_pred)
