@@ -5,11 +5,13 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 import cv2
 
-DATASET_PATH = "data/raw/EuroSAT_RGB"
+DATASET_PATH_RGB = "data/raw/EuroSAT_RGB"
+DATASET_PATH_MULTISPECTRAL = "data/raw/EuroSAT_MS"
+
 IMG_SIZE = 128  # Resize images to 128x128
 NUM_CLASSES = 10  # Adjust based on dataset
 
-CLASS_NAMES = sorted(os.listdir(DATASET_PATH))  # e.g., ["Forest", "Urban", "Water", ...]
+CLASS_NAMES = sorted(os.listdir(DATASET_PATH_RGB))  # e.g., ["Forest", "Urban", "Water", ...]
 CLASS_TO_INDEX = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 
 
@@ -33,20 +35,37 @@ def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3):
     return np.array(images), np.array(labels)
 
 
-def preprocess_data(images, labels, num_classes=NUM_CLASSES):
-    """Normalizes images and converts labels to one-hot encoding."""
-    images = images.astype("float32") / 255.0  # Normalize
-    labels = to_categorical(labels, num_classes)  # One-hot encode labels
-    return images, labels
+def get_dataset(img_size=IMG_SIZE, data_type=" "):
+    """Loads and prepares the dataset basert på datatype."""
 
+    # Split RGB data
+    if (data_type == "RGB"):
 
-def get_dataset(img_size=IMG_SIZE, channels=3):
-    """Loads and prepares the dataset."""
-    images, labels = load_images_from_folder(DATASET_PATH, img_size, channels)
-    images, labels = preprocess_data(images, labels)
+        # Last inn RGB bilder
+        images, labels = load_images_from_folder(DATASET_PATH_RGB, IMG_SIZE, channels=3)
 
-    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=42)
-    return X_train, X_test, y_train, y_test
+        # Normalser data
+        images = images.astype("float32") / 255.0
+
+    # Split Multispectral data
+    elif (data_type == "MS"):
+
+        # Last inn Multispectral bilder
+        images, labels = load_images_from_folder(DATASET_PATH_MULTISPECTRAL, IMG_SIZE, channels=13)
+
+        # Normalser data
+        images = images.astype("float32") / 10000.0  # Endre denne basert på MS rekkevidde
+    else:
+        raise ValueError('Invalid data type')
+
+    # One-hot encode etikettene
+    labels = to_categorical(labels, NUM_CLASSES)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        images, labels, test_size=0.2, random_state=42
+    )
+
+    return X_train, X_test, y_train, y_train
 
 
 if __name__ == "__main__":
