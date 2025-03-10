@@ -5,7 +5,7 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from src.data_loader import get_dataset, IMG_SIZE, NUM_CLASSES
+from src.utils.data_loader import get_dataset, IMG_SIZE, NUM_CLASSES
 
 
 def build_model(input_shape, num_classes):
@@ -29,7 +29,7 @@ def build_model(input_shape, num_classes):
 if __name__ == "__main__":
 
     # Definerer trening og test set med get_dataset
-    X_train, X_test, y_train, y_test = get_dataset(channels=3)
+    X_train, X_test, y_train, y_test = get_dataset(data_type="RGB")
 
     model = build_model((IMG_SIZE, IMG_SIZE, 3), NUM_CLASSES)
     model.summary()
