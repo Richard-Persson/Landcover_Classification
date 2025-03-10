@@ -10,7 +10,8 @@ from PIL import Image
 from sklearn.metrics import classification_report, confusion_matrix
 
 
-# Load trained model
+# Laster inn modellen, bruker st.cache_resource sånn modellen blir kjørt en gang
+@st.cache_resource
 def load_model():
     return tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
 
