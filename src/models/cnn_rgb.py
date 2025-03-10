@@ -21,9 +21,8 @@ def build_model(input_shape, num_classes):
         Dropout(0.5),
         Dense(num_classes, activation='softmax')
     ])
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
 
@@ -39,17 +38,7 @@ if __name__ == "__main__":
 
     y_pred = model.predict(X_test)
 
-    if y_test.ndim > 1 and y_test.shape[1] > 1:
-        y_true_labels = np.argmax(y_test, axis=1)
-    else:
-        y_true_labels = y_test
-
-    if y_pred.ndim > 1 and y_pred.shape[1] > 1:
-        y_pred_labels = np.argmax(y_pred, axis=1)
-    else:
-        y_pred_labels = y_pred
-
-    np.save("models/CNN/y_true_rgb.npy", y_true_labels)
-    np.save("models/CNN/y_pred_rgb.npy", y_pred_labels)
+    np.save("models/CNN/y_true_rgb.npy", y_test)
+    np.save("models/CNN/y_pred_rgb.npy", y_pred)
 
     model.save("models/CNN/landcover_cnn_rgb.h5")
