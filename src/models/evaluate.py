@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 from sklearn.metrics import confusion_matrix, classification_report
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from src.data_loader import get_dataset, CLASS_NAMES  # Load test dataset
+from src.utils.data_loader import get_dataset, CLASS_NAMES, IMG_SIZE  # Load test dataset
 
 # Load the trained model
 model = load_model("models/landcover_cnn.h5")
 print("Model loaded successfully!")
 
 # Load test data
-_, X_test, _, y_test = get_dataset()
+_, X_test, _, y_test = get_dataset(IMG_SIZE, "RGB")
 
 # Evaluate the model
 loss, accuracy = model.evaluate(X_test, y_test)
