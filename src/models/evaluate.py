@@ -3,13 +3,13 @@ import sys
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 from sklearn.metrics import confusion_matrix, classification_report
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from src.utils.data_loader import get_dataset, CLASS_NAMES, IMG_SIZE  # Load test dataset
 
 # Load the trained model
-model = load_model("models/landcover_cnn.h5")
+model = tf.keras.models.load_model("models/landcover_cnn.h5")
 print("Model loaded successfully!")
 
 # Load test data

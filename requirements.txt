@@ -6,4 +6,4 @@ matplotlib
 streamlit
 rasterio
 matplotlib
-numpy
+transformers
