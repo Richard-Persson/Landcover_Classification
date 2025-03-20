@@ -45,4 +45,4 @@ if __name__ == "__main__":
     np.save("models/CNN/y_true_ms.npy", y_test)
     np.save("models/CNN/y_pred_ms.npy", y_pred)
 
-    model.save("models/CNN/landcover_ms_rgb.keras")
+    model.save("models/CNN/landcover_ms.keras")
