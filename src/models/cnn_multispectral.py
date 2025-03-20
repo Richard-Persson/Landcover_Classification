@@ -1,45 +1,48 @@
+import os
+import sys
+import tensorflow as tf
+import numpy as np
 import rasterio
 import matplotlib.pyplot as plt
-import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from src.utils.data_loader import get_dataset, IMG_SIZE, NUM_CLASSES
+
+# Test med et bilde
 IMAGE = "data/raw/EuroSAT_MS/AnnualCrop/AnnualCrop_1.tif"
 
+def build_model(input_shape, num_classes):
+    """Bygger en sekvensiell CNN modell"""
+    model = Sequential([
+        Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+        MaxPooling2D((2, 2)),
+        Conv2D(64, (3, 3), activation='relu'),
+        MaxPooling2D((2, 2)),
+        Flatten(),
+        Dense(128, activation='relu'),
+        Dropout(0.5),
+        Dense(num_classes, activation='softmax')
+    ])
+    
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
 
-with rasterio.open(IMAGE) as src:
-     img = src.read()  # Leser alle bånd som en NumPy-array
-     print(img.shape)  # (bands, height, width)
 
+# Deler opp data og trener modellen på MS båndene
+if __name__ == "__main__":
+    # TODO fikse get_dataset for multispectral bilder
+    X_train, X_test, y_train, y_test = get_dataset(data_type="MS")
 
-# Assuming NIR is band 7 and red is band 3
-nir_band = img[7]  # NIR band (for example)
-red_band = img[2]  # Red band
+    print('MAIN: MS')
+    model = build_model((IMG_SIZE, IMG_SIZE, 13), NUM_CLASSES)
+    model.summary()
+    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=32)
 
-# Calculate NDVI
-ndvi = (nir_band - red_band) / (nir_band + red_band)
+    y_pred = model.predict(X_test)
 
-# Plot the NDVI result
-plt.imshow(ndvi, cmap="RdYlGn")
-plt.title("NDVI Visualization")
-plt.colorbar()
-plt.show()
+    np.save("models/CNN/y_true_ms.npy", y_test)
+    np.save("models/CNN/y_pred_ms.npy", y_pred)
 
-num_bands = 13
-num_columns = 5  # You can adjust this if you want more or fewer columns
-num_rows = (num_bands // num_columns) + (num_bands % num_columns > 0)  # Compute required rows
-
-# Plot all 13 bands in a grid
-fig, axes = plt.subplots(num_rows, num_columns, figsize=(15, 10))  # Create the grid dynamically
-axes = axes.ravel()  # Flatten the 2D array of axes into 1D
-
-for i in range(13):
-    ax = axes[i]
-    ax.imshow(img[i], cmap="viridis")  # Apply a colormap for better contrast
-    ax.set_title(f"Band {i+1}")
-    ax.axis("off")  # Turn off axis labels for cleaner visualization
-
-# Hide the remaining empty axes (if any)
-for i in range(num_bands, len(axes)):
-    axes[i].axis("off")
-
-plt.tight_layout()
-plt.show()
+    model.save("models/CNN/landcover_ms_rgb.keras")

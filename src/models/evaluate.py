@@ -9,11 +9,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 from src.utils.data_loader import get_dataset, CLASS_NAMES, IMG_SIZE  # Load test dataset
 
 # Load the trained model
-model = tf.keras.models.load_model("models/landcover_cnn.h5")
+model = tf.keras.models.load_model("models/CNN/landcover_ms_rgb.keras")
 print("Model loaded successfully!")
 
 # Load test data
-_, X_test, _, y_test = get_dataset(IMG_SIZE, "RGB")
+_, X_test, _, y_test = get_dataset(IMG_SIZE, "MS")
 
 # Evaluate the model
 loss, accuracy = model.evaluate(X_test, y_test)
