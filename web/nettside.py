@@ -16,7 +16,7 @@ def load_model(model):
     if model == "CNN_RGB":
         return tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
     if model == "CNN_MS":
-        return tf.keras.models.load_model("models/CNN/landcover_ms_rgb.keras")
+        return tf.keras.models.load_model("models/CNN/landcover_ms.keras")
 
 # Define class labels
 CLASS_LABELS = ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial",
