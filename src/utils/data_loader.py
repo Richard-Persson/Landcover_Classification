@@ -16,8 +16,9 @@ CLASS_NAMES = sorted(os.listdir(DATASET_PATH_RGB))  # ["PermanentCrop", "AnnualC
 CLASS_TO_INDEX = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 
 
-def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_per_class=500):
-    """Loads images and assigns numeric labels based on folder names."""
+def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_per_class=750):
+    """Laster inn bilder og gir de numeriske etiketter basert på mappenavn.
+        Setter begrensning på 750 bilder pr klasse fordi det er det vi maks får trent MS bilder på """
     images, labels = [], []
 
     print(f"📂 Loading from: {folder}")
