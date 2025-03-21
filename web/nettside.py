@@ -12,11 +12,11 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 # Laster inn modellen, bruker st.cache_resource sånn modellen blir kjørt en gang
 @st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
-
-
-model = load_model()
+def load_model(model):
+    if model == "CNN_RGB":
+        return tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
+    if model == "CNN_MS":
+        return tf.keras.models.load_model("models/CNN/landcover_ms_rgb.keras")
 
 # Define class labels
 CLASS_LABELS = ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial",
@@ -24,32 +24,67 @@ CLASS_LABELS = ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Indu
 
 # Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Confusion Matrix", "Upload & Predict", "Maps"])
+page = st.sidebar.radio("Go to", ["Model Performance", "Upload & Predict", "Maps"])
 
 # ========================== Confusion Matrix ==========================
-if page == "Confusion Matrix":
+if page == "Model Performance":
     st.title("Confusion Matrix & Model Performance")
 
-    # Load precomputed test labels & predictions
-    y_true = np.load("models/CNN/y_true_rgb.npy")   # Ground truth labels
-    y_pred = np.load("models/CNN/y_pred_rgb.npy")   # Predicted labels
+    valg = st.selectbox("", options=["CNN_RGB", "CNN_MS"], index=None, placeholder="Velg modell")
 
-    # Compute confusion matrix
-    cm = confusion_matrix(y_true, y_pred)
+    if valg == "CNN_RGB":
+        model = load_model("CNN_RGB")
+        # Load precomputed test labels & predictions
+        y_true = np.load("models/CNN/y_true_rgb.npy")   # Ground truth labels
+        y_pred = np.load("models/CNN/y_pred_rgb.npy")   # Predicted labels
 
-    # Plot confusion matrix
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=CLASS_LABELS, yticklabels=CLASS_LABELS)
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True Label")
-    plt.title("Confusion Matrix")
-    st.pyplot(fig)
+        # Compute confusion matrix
+        cm = confusion_matrix(y_true, y_pred)
 
-    # Classification report
-    report = classification_report(y_true, y_pred, target_names=CLASS_LABELS, output_dict=True)
-    report_df = pd.DataFrame(report).transpose()
-    st.write("### Classification Report")
-    st.dataframe(report_df)
+        # Plot confusion matrix
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=CLASS_LABELS, yticklabels=CLASS_LABELS)
+        plt.xlabel("Predicted Label")
+        plt.ylabel("True Label")
+        plt.title("Confusion Matrix")
+        st.pyplot(fig)
+
+        # Classification report
+        report = classification_report(y_true, y_pred, target_names=CLASS_LABELS, output_dict=True)
+        report_df = pd.DataFrame(report).transpose()
+        st.write("### Classification Report")
+        st.dataframe(report_df)
+
+    if valg == "CNN_MS":
+        model = load_model("CNN_MS")
+        # Load precomputed test labels & predictions
+        y_true = np.load("models/CNN/y_true_ms.npy")   # Ground truth labels
+        y_pred = np.load("models/CNN/y_pred_ms.npy")   # Predicted labels
+
+        # TODO Dette er en midlertidig fix, forandre y_true og y_pred før lagring av modell etter trening
+        y_true = np.argmax(np.load("models/CNN/y_true_ms.npy"), axis=1)  # Konverterer fra én-hot til labels
+        y_pred = np.argmax(np.load("models/CNN/y_pred_ms.npy"), axis=1)  # Henter predikerte klasser
+        # ⬆️ ⬆️ ⬆️ ⬆️ ⬆️
+
+        print(f"zzzzzzzzzzzzzzzzzz y_true:, {y_true}, y_pred:,   {y_pred}, xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
+        # Compute confusion matrix
+        cm = confusion_matrix(y_true, y_pred)
+
+        # Plot confusion matrix
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=CLASS_LABELS, yticklabels=CLASS_LABELS)
+        plt.xlabel("Predicted Label")
+        plt.ylabel("True Label")
+        plt.title("Confusion Matrix")
+        st.pyplot(fig)
+
+        # Classification report
+        report = classification_report(y_true, y_pred, target_names=CLASS_LABELS, output_dict=True)
+        report_df = pd.DataFrame(report).transpose()
+        st.write("### Classification Report")
+        st.dataframe(report_df)
+
 
 # ======================== Opplastning av eget bilde ========================
 elif page == "Upload & Predict":
