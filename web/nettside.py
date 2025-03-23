@@ -92,6 +92,7 @@ if page == "Model Performance":
 # ======================== Opplastning av eget bilde ========================
 elif page == "Upload & Predict":
     st.title("Upload an Image for Prediction")
+    st.text(f"Valgt modell: {valg}")
 
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
     
@@ -116,17 +117,18 @@ elif page == "Upload & Predict":
 # ======================== Maps & Prediksjon ========================
 elif page == "Maps":
     st.title("Choose a spot on the map for prediction")
+    st.text(f"Valgt modell: {valg}")
 
     # Definerer kart
     map = folium.Map(location=[50, 10], zoom_start=4, title='Satelite Map', )
 
     # Legger til satelittbilde
     tile = folium.TileLayer(
-    tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attr = 'Esri',
-    name = 'Esri Satellite',
-    overlay = False,
-    control = True
+        tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr = 'Esri',
+        name = 'Esri Satellite',
+        overlay = False,
+        control = True
     ).add_to(map)
 
     # Legger til kartet i streamlit
