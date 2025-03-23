@@ -33,6 +33,7 @@ page = st.sidebar.radio("Go to", ["Model Performance", "Upload & Predict", "Maps
 # ========================== Confusion Matrix ==========================
 if page == "Model Performance":
     st.title("Confusion Matrix & Model Performance")
+    st.text(f"Valgt modell: {valg}")
 
     if valg == "CNN_RGB":
         model = load_model("CNN_RGB")
