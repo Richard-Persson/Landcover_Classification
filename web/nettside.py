@@ -18,19 +18,21 @@ def load_model(model):
     if model == "CNN_MS":
         return tf.keras.models.load_model("models/CNN/landcover_ms.keras")
 
+
 # Define class labels
 CLASS_LABELS = ["AnnualCrop", "Forest", "HerbaceousVegetation", "Highway", "Industrial",
                 "Pasture", "PermanentCrop", "Residential", "River", "SeaLake"]
 
+# Velg modell
+st.sidebar.title("Model")
+valg = st.sidebar.selectbox("", options=["CNN_RGB", "CNN_MS"], index=None, placeholder="Velg modell")
+
 # Navigation
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Model Performance", "Upload & Predict", "Maps"])
-
 # ========================== Confusion Matrix ==========================
 if page == "Model Performance":
     st.title("Confusion Matrix & Model Performance")
-
-    valg = st.selectbox("", options=["CNN_RGB", "CNN_MS"], index=None, placeholder="Velg modell")
 
     if valg == "CNN_RGB":
         model = load_model("CNN_RGB")
