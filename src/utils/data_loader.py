@@ -83,4 +83,3 @@ def get_dataset(img_size=IMG_SIZE, data_type=" "):
 
 if __name__ == "__main__":
     X_train, X_test, y_train, y_test = get_dataset()
-    print(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}")
