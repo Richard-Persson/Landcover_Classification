@@ -1,4 +1,5 @@
 import os
+import random
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
@@ -21,12 +22,14 @@ def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_pe
         Setter begrensning på 750 bilder pr klasse fordi det er det vi maks får trent MS bilder på """
     images, labels = [], []
 
-    print(f"📂 Loading from: {folder}")
+    print(f"💾 Loading from: {folder}")
     for class_name in os.listdir(folder):
         class_path = os.path.join(folder, class_name)
         if os.path.isdir(class_path):
             print(f"📂 Processing class: {class_name}")
 
+            image_files = os.listdir(class_path)
+            random.shuffle(image_files)  # Velger forskjellige bilder når vi henter fra datasettet 
             image_files = os.listdir(class_path)[:max_images_per_class] # Begrenser antall bilder vi henter ut
             for img_name in image_files:
                 img_path = os.path.join(class_path, img_name)
