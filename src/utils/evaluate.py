@@ -14,7 +14,7 @@ model_CNN_MS = tf.keras.models.load_model("models/CNN/landcover_ms.keras")
 
 # Modeller ResNet
 model_ResNet_RGB = tf.keras.models.load_model("models/ResNet/landcover_resnet_rgb.h5")
-
+model_ResNet_MS = tf.keras.models.load_model("models/ResNet/landcover_resnet_multispectral.h5")
 # Modeller EffNet
 
 
@@ -39,6 +39,9 @@ loss_ResNet_RGB, accuracy_ResNet_RGB = model_ResNet_RGB.evaluate(X_testRGB, y_te
 print(f"Test Loss ResNet_RGB: {loss_ResNet_RGB:.4f}")
 print(f"Test Accuracy ResNet_RGB: {accuracy_ResNet_RGB:.4%}")
 
+loss_ResNet_MS, accuracy_ResNet_MS = model_ResNet_MS.evaluate(X_testMS, y_testMS)
+print(f"Test Loss ResNet_MS: {loss_ResNet_MS:.4f}")
+print(f"Test Accuracy ResNet_MS: {accuracy_ResNet_MS:.4%}")
 
 # Predikere på RGB testdata
 y_pred_CNN_RGB = np.argmax(model_CNN_RGB.predict(X_testRGB), axis=1)
@@ -53,10 +56,15 @@ y_true_ResNet_RGB = np.argmax(y_testRGB, axis=1)
 y_pred_CNN_MS = np.argmax(model_CNN_MS.predict(X_testMS), axis=1)
 y_true_CNN_MS = np.argmax(y_testMS, axis=1)
 
+# ResNet
+y_pred_ResNet_MS = np.argmax(model_ResNet_MS.predict(X_testMS), axis=1)
+y_true_ResNet_MS = np.argmax(y_testMS, axis=1)
+
 # Confusion matrix RGB
 cmRGB = confusion_matrix(y_true_CNN_RGB, y_pred_CNN_RGB)
 cm_ResNet_RGB = confusion_matrix(y_true_ResNet_RGB, y_pred_ResNet_RGB)
 cmMS = confusion_matrix(y_true_CNN_MS, y_pred_CNN_MS)
+cm_ResNet_MS = confusion_matrix(y_true_ResNet_MS, y_pred_ResNet_MS)
 
 
 def plot_confusion_matrix(cm, model_name, ax):
@@ -68,11 +76,12 @@ def plot_confusion_matrix(cm, model_name, ax):
 
 
 # Create a figure with three confusion matrices
-fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+fig, axes = plt.subplots(1, 4, figsize=(18, 6))
 
 plot_confusion_matrix(cmRGB, "CNN RGB", axes[0])
 plot_confusion_matrix(cmMS, "CNN MS", axes[1])
 plot_confusion_matrix(cm_ResNet_RGB, "ResNet RGB", axes[2])
+plot_confusion_matrix(cm_ResNet_MS, "ResNet MS", axes[3])
 
 plt.tight_layout()
 plt.show()
@@ -80,13 +89,17 @@ plt.show()
 class_accuracy_cnn_rgb = np.diag(cmRGB) / np.sum(cmRGB, axis=1)
 class_accuracy_cnn_ms = np.diag(cmMS) / np.sum(cmMS, axis=1)
 class_accuracy_resnet_rgb = np.diag(cm_ResNet_RGB) / np.sum(cm_ResNet_RGB, axis=1)
+class_accuracy_resnet_ms = np.diag(cm_ResNet_MS) / np.sum(cm_ResNet_MS, axis=1)
 
 x = np.arange(len(CLASS_NAMES))
 
+bar_width = 0.2
+
 plt.figure(figsize=(12, 6))
-plt.bar(x - 0.3, class_accuracy_cnn_rgb, width=0.3, label="CNN RGB", alpha=0.8)
-plt.bar(x, class_accuracy_cnn_ms, width=0.3, label="CNN MS", alpha=0.8)
-plt.bar(x + 0.3, class_accuracy_resnet_rgb, width=0.3, label="ResNet RGB", alpha=0.8)
+plt.bar(x - 1.5*bar_width, class_accuracy_cnn_rgb, width=bar_width, label="CNN RGB", alpha=0.8)
+plt.bar(x - 0.5*bar_width, class_accuracy_cnn_ms, width=bar_width, label="CNN MS", alpha=0.8)
+plt.bar(x + 0.5*bar_width, class_accuracy_resnet_rgb, width=bar_width, label="ResNet RGB", alpha=0.8)
+plt.bar(x + 1.5*bar_width, class_accuracy_resnet_ms, width=bar_width, label="ResNet MS", alpha=0.8)
 
 plt.xticks(ticks=x, labels=CLASS_NAMES, rotation=45)
 plt.ylabel("Accuracy")
@@ -106,3 +119,6 @@ print(classification_report(y_true_CNN_MS, y_pred_CNN_MS, target_names=CLASS_NAM
 
 print("Classification Report ResNet MS:")
 print(classification_report(y_true_ResNet_RGB, y_pred_ResNet_RGB, target_names=CLASS_NAMES))
+
+print("Classification Report ResNet MS:")
+print(classification_report(y_true_ResNet_MS, y_pred_ResNet_MS, target_names=CLASS_NAMES))

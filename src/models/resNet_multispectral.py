@@ -73,7 +73,7 @@ if __name__ == "__main__":
     else:
         print("Trener ny modell...")
         model = build_resnet_model((IMG_SIZE, IMG_SIZE, 13), NUM_CLASSES)
-        model.fit(train_dataset, validation_data=test_dataset, epochs=10)
+        model.fit(train_dataset, validation_data=test_dataset, epochs=20)
 
         # Lagre modellen
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
