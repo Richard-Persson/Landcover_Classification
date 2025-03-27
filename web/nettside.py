@@ -8,6 +8,18 @@ import folium
 from streamlit_folium import st_folium
 from PIL import Image
 from sklearn.metrics import classification_report, confusion_matrix
+from dotenv import load_dotenv
+import os
+import requests
+import io
+import cv2
+import skimage
+
+# Laster inn env fil
+load_dotenv()
+
+# Henter ut Google api key
+google_maps = os.getenv('GOOGLE_MAPS_API')
 
 
 # Laster inn modellen, bruker st.cache_resource sånn modellen blir kjørt en gang
@@ -89,13 +101,12 @@ if page == "Model Performance":
         st.dataframe(report_df)
 
 
-# ======================== Opplastning av eget bilde ========================
+    # ======================== Opplastning av eget bilde ========================
 elif page == "Upload & Predict":
     st.title("Upload an Image for Prediction")
     st.text(f"Valgt modell: {valg}")
 
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
-    
     if uploaded_file is not None:
         # Preprosessering av bildet
         image = Image.open(uploaded_file).resize((128, 128))
@@ -107,30 +118,65 @@ elif page == "Upload & Predict":
         predicted_class = CLASS_LABELS[np.argmax(prediction)]
 
         # Viser bildet som er lastet opp
-        st.image(image, caption=f"Predicted Class: {predicted_class}", use_column_width=True)
+        st.image(image, caption=f"Predicted Class: {predicted_class}", use_container_width=True)
 
         # Viser confidence scores
         st.write("### Confidence Scores:")
         scores_df = pd.DataFrame(prediction[0], index=CLASS_LABELS, columns=["Confidence"])
         st.dataframe(scores_df)
 
-# ======================== Maps & Prediksjon ========================
+    # ======================== Maps & Prediksjon ========================
 elif page == "Maps":
-    st.title("Choose a spot on the map for prediction")
-    st.text(f"Valgt modell: {valg}")
+
+    # Function to get a Google Maps satellite image
+    def get_google_maps_image(lat, lon, zoom=16, size="400x400", maptype="satellite"):
+        url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom={zoom}&size={size}&maptype={maptype}&key={google_maps}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            return Image.open(io.BytesIO(response.content))
+        else:
+            st.error("Failed to load map image")
+            return None
+        st.title("Choose a spot on the map for prediction")
+        st.text(f"Valgt modell: {valg}")
 
     # Definerer kart
     map = folium.Map(location=[50, 10], zoom_start=4, title='Satelite Map', )
 
     # Legger til satelittbilde
     tile = folium.TileLayer(
-        tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attr = 'Esri',
-        name = 'Esri Satellite',
-        overlay = False,
-        control = True
+        tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attr='Esri',
+        name='Esri Satellite',
+        overlay=False,
+        control=True
     ).add_to(map)
 
     # Legger til kartet i streamlit
     map_data = st_folium(map, height=500, width=700)
-    st.button(label='Save', disabled=1)
+
+    if map_data and "center" in map_data:
+        lat, lon = map_data["center"]["lat"], map_data["center"]["lng"]
+        st.write(f"Kartets senter: {lat}, {lon}")
+    # Knapp for å hente satellittbilde
+    if st.button("Hent satellittbilde"):
+        map_image = get_google_maps_image(lat, lon)
+
+        # TODO Fikse bilde som blir lastet inn, modellene bommer veldig??
+        if map_image:
+            st.image(map_image, caption="Satellittbilde")
+
+            # endrer fra 1 kanal til 3 kanaler for å matche rgb
+            map_image = skimage.color.gray2rgb(map_image)
+            # Forbered bildet for modellen
+            img_resized = cv2.resize(map_image, (128, 128))  # Tilpass størrelse til modellen
+            img_array = img_resized / 255.0   # Normaliser
+            img_array = np.expand_dims(img_array, axis=0)  # Legg til batch-dimensjon
+            # Last inn modellen
+            model = tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
+
+            # Kjør prediksjon
+            prediction = model.predict(img_array)
+            predicted_class = np.argmax(prediction)
+
+            st.write(f"Predikert klasse: {predicted_class} | {CLASS_LABELS[predicted_class]}")
