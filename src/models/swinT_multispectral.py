@@ -18,7 +18,7 @@ from keras import ops
 from src.utils.data_loader import get_dataset, IMG_SIZE, NUM_CLASSES
 
 num_classes = NUM_CLASSES
-input_shape = (128, 128, 3)
+input_shape = (128, 128, 13)
 
 patch_size = (2, 2)  # 2-by-2 sized patches
 dropout_rate = 0.03  # Dropout rate
@@ -42,7 +42,7 @@ validation_split = 0.1
 weight_decay = 0.0001
 label_smoothing = 0.1
 
-x_train, x_test, y_train, y_test = get_dataset(data_type="RGB")
+x_train, x_test, y_train, y_test = get_dataset(data_type="MS")
 print("x_train:", x_train.shape)
 print("y_train:", y_train.shape)
 print("x_test:", x_test.shape)
@@ -361,6 +361,7 @@ class PatchMerging(keras.layers.Layer):
         return self.linear_trans(x)
     
 def augment(x):
+    #x = tf.image.random_crop(x, size=(image_dimension, image_dimension, 3))
     x = tf.image.random_flip_left_right(x)
     return x
 
@@ -387,7 +388,7 @@ dataset_test = (
     .prefetch(tf.data.experimental.AUTOTUNE)
 )
 
-save_path = "models/Swin/landcover_swin_rgb.h5"
+save_path = "models/Swin/landcover_swin_multispectral.h5"
 
 if os.path.exists(save_path):
     print("Laster inn tidligere trent Swin-modell...")
@@ -402,7 +403,7 @@ if os.path.exists(save_path):
     )
 else:
     print("Trener ny Swin-modell fra bunnen...")
-    input = layers.Input(shape=(4096, 12))
+    input = layers.Input(shape=(4096, 52))
     x = PatchEmbedding(num_patch_x * num_patch_y, embed_dim)(input)
     x = SwinTransformer(
         dim=embed_dim,
@@ -452,5 +453,5 @@ else:
     model.save(save_path)
     print(f"Modellen ble lagret til: {save_path}")
 
-accuracy = model.evaluate(dataset_test)
-print(f"🎯 Test accuracy: {accuracy:.4f}")
+loss, accuracy = model.evaluate(dataset_test)
+print(f"🎯 Test accuracy: {accuracy:.4f}, Test loss: {loss:.4f}")
