@@ -19,3 +19,5 @@ logs/
 .env
 .envrc
 
+# Ignore data
+data/raw
