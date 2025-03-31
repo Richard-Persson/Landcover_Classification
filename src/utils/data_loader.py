@@ -17,7 +17,7 @@ CLASS_NAMES = sorted(os.listdir(DATASET_PATH_RGB))  # ["PermanentCrop", "AnnualC
 CLASS_TO_INDEX = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 
 
-def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_per_class=750):
+def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_per_class=750, selected_bands = None):
     """Laster inn bilder og gir de numeriske etiketter basert på mappenavn.
         Setter begrensning på 750 bilder pr klasse fordi det er det vi maks får trent MS bilder på """
     images, labels = [], []
@@ -43,7 +43,13 @@ def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_pe
                     with rasterio.open(img_path) as src:
                         img = src.read()  # Shape: (channels, height, width)
                         img = np.transpose(img, (1, 2, 0))  # Convert to (height, width, channels)
-                        img = np.stack([cv2.resize(img[..., i], (img_size, img_size)) for i in range(channels)], axis=-1)
+
+                        if selected_bands is not None:
+                            img = np.stack([cv2.resize(img[..., i], (img_size, img_size))
+                                            for i in selected_bands], axis=-1)
+                        else:
+                            img = np.stack([cv2.resize(img[..., i], (img_size, img_size)) 
+                                for i in range(channels)], axis=-1)
 
                 images.append(img)
                 labels.append(CLASS_TO_INDEX[class_name])
@@ -51,8 +57,9 @@ def load_images_from_folder(folder, img_size=IMG_SIZE, channels=3, max_images_pe
     return np.array(images), np.array(labels)
 
 
-def get_dataset(img_size=IMG_SIZE, data_type=" "):
-    """Loads and prepares the dataset basert på datatype."""
+def get_dataset(img_size=IMG_SIZE, data_type=" ", bands=None):
+    """Laster og forbereder datasetet basert på datatype.
+        | bands = 1: RGB | bands = 2: NDVI | bands = 3: SWIR |"""
 
     # Split RGB data
     if (data_type == "RGB"):
@@ -66,8 +73,21 @@ def get_dataset(img_size=IMG_SIZE, data_type=" "):
     # Split MultRGBispectral data
     elif (data_type == "MS"):
 
+        # Standard RGB bands
+        if bands == 1:
+            selectedBands = [1, 2, 3]
+
+        # Vegetation Health bands
+        elif bands == 2:
+            selectedBands = [7, 3, 2]
+
+        # Urban Soil Analysis bands
+        elif bands == 3:
+            selectedBands = [1, 7, 10]
+        else:
+            selectedBands = None
         # Last inn Multispectral bilder
-        images, labels = load_images_from_folder(DATASET_PATH_MULTISPECTRAL, IMG_SIZE, channels=13)
+        images, labels = load_images_from_folder(DATASET_PATH_MULTISPECTRAL, IMG_SIZE, channels=13, selected_bands=selectedBands)
 
         # Normalser data
         images = images.astype("float32", copy=False)  # Unngå ekstra kopi
