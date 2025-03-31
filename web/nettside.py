@@ -81,8 +81,6 @@ if page == "Model Performance":
         y_pred = np.argmax(np.load("models/CNN/y_pred_ms.npy"), axis=1)  # Henter predikerte klasser
         # ⬆️ ⬆️ ⬆️ ⬆️ ⬆️
 
-        print(f"zzzzzzzzzzzzzzzzzz y_true:, {y_true}, y_pred:,   {y_pred}, xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-
         # Compute confusion matrix
         cm = confusion_matrix(y_true, y_pred)
 
@@ -106,13 +104,17 @@ elif page == "Upload & Predict":
     st.title("Upload an Image for Prediction")
     st.text(f"Valgt modell: {valg}")
 
+    if valg == "CNN_RGB":
+        model = load_model("CNN_RGB")
+
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
     if uploaded_file is not None:
         # Preprosessering av bildet
         image = Image.open(uploaded_file).resize((128, 128))
         image_array = np.array(image) / 255.0  # Normalize
         image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
-
+        print("Image shape:", image_array.shape)
+        print("Image dtype:", image_array.dtype)
         # Predict class
         prediction = model.predict(image_array)
         predicted_class = CLASS_LABELS[np.argmax(prediction)]
@@ -127,6 +129,7 @@ elif page == "Upload & Predict":
 
     # ======================== Maps & Prediksjon ========================
 elif page == "Maps":
+    st.text(f"Valgt modell: {valg}")
 
     # Function to get a Google Maps satellite image
     def get_google_maps_image(lat, lon, zoom=16, size="400x400", maptype="satellite"):
@@ -158,25 +161,27 @@ elif page == "Maps":
     if map_data and "center" in map_data:
         lat, lon = map_data["center"]["lat"], map_data["center"]["lng"]
         st.write(f"Kartets senter: {lat}, {lon}")
+
     # Knapp for å hente satellittbilde
     if st.button("Hent satellittbilde"):
-        map_image = get_google_maps_image(lat, lon)
+        map_image = get_google_maps_image(lat, lon, zoom=18, size="800x800")
 
+        model = load_model('CNN_RGB')
         # TODO Fikse bilde som blir lastet inn, modellene bommer veldig??
         if map_image:
-            st.image(map_image, caption="Satellittbilde")
 
-            # endrer fra 1 kanal til 3 kanaler for å matche rgb
-            map_image = skimage.color.gray2rgb(map_image)
+            map_image = map_image.convert('RGB')
+            map_image = np.array(map_image)
+
+            st.image(map_image, caption="Satellittbilde")
             # Forbered bildet for modellen
             img_resized = cv2.resize(map_image, (128, 128))  # Tilpass størrelse til modellen
             img_array = img_resized / 255.0   # Normaliser
-            img_array = np.expand_dims(img_array, axis=0)  # Legg til batch-dimensjon
+            img_array = np.expand_dims(img_array, axis=0)
             # Last inn modellen
-            model = tf.keras.models.load_model("models/CNN/landcover_cnn_rgb.h5")
 
             # Kjør prediksjon
             prediction = model.predict(img_array)
-            predicted_class = np.argmax(prediction)
+            predicted_class = CLASS_LABELS[np.argmax(prediction)]
 
-            st.write(f"Predikert klasse: {predicted_class} | {CLASS_LABELS[predicted_class]}")
+            st.write(f"Predikert klasse: {predicted_class}")
