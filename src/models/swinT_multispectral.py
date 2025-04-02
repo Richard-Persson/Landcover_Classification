@@ -342,8 +342,8 @@ class PatchEmbedding(layers.Layer):
 
 
 class PatchMerging(keras.layers.Layer):
-    def __init__(self, num_patch, embed_dim):
-        super().__init__()
+    def __init__(self, num_patch, embed_dim, **kwargs):
+        super().__init__(**kwargs)
         self.num_patch = num_patch
         self.embed_dim = embed_dim
         self.linear_trans = layers.Dense(2 * embed_dim, use_bias=False)
@@ -387,71 +387,79 @@ dataset_test = (
     .map(lambda x, y: (patch_extract(x), y))
     .prefetch(tf.data.experimental.AUTOTUNE)
 )
+if __name__ == "__main__":
+    save_path = "models/Swin/landcover_swin_multispectral.h5"
 
-save_path = "models/Swin/landcover_swin_multispectral.h5"
+    if os.path.exists(save_path):
+        print("Laster inn tidligere trent Swin-modell...")
+        model = keras.models.load_model(
+            save_path,
+            custom_objects={
+                "SwinTransformer": SwinTransformer,
+                "PatchEmbedding": PatchEmbedding,
+                "PatchMerging": PatchMerging,
+            }
+        )
+        model.compile(
+            loss=keras.losses.CategoricalCrossentropy(label_smoothing=label_smoothing),
+            optimizer=keras.optimizers.AdamW(learning_rate=learning_rate, weight_decay=weight_decay),
+            metrics=[
+                keras.metrics.CategoricalAccuracy(name="accuracy"),
+            ],
+        )
 
-if os.path.exists(save_path):
-    print("Laster inn tidligere trent Swin-modell...")
-    model = load_model(save_path, compile=False)
-    model.compile(
-        loss=keras.losses.CategoricalCrossentropy(label_smoothing=label_smoothing),
-        optimizer=keras.optimizers.AdamW(learning_rate=learning_rate, weight_decay=weight_decay),
-        metrics=[
-            keras.metrics.CategoricalAccuracy(name="accuracy"),
-            keras.metrics.TopKCategoricalAccuracy(5, name="top-5-accuracy"),
-        ],
-    )
-else:
-    print("Trener ny Swin-modell fra bunnen...")
-    input = layers.Input(shape=(4096, 52))
-    x = PatchEmbedding(num_patch_x * num_patch_y, embed_dim)(input)
-    x = SwinTransformer(
-        dim=embed_dim,
-        num_patch=(num_patch_x, num_patch_y),
-        num_heads=num_heads,
-        window_size=window_size,
-        shift_size=0,
-        num_mlp=num_mlp,
-        qkv_bias=qkv_bias,
-        dropout_rate=dropout_rate,
-    )(x)
-    x = SwinTransformer(
-        dim=embed_dim,
-        num_patch=(num_patch_x, num_patch_y),
-        num_heads=num_heads,
-        window_size=window_size,
-        shift_size=shift_size,
-        num_mlp=num_mlp,
-        qkv_bias=qkv_bias,
-        dropout_rate=dropout_rate,
-    )(x)
-    x = PatchMerging((num_patch_x, num_patch_y), embed_dim=embed_dim)(x)
-    x = layers.GlobalAveragePooling1D()(x)
-    output = layers.Dense(num_classes, activation="softmax")(x)
+    else:
+        print("Trener ny Swin-modell fra bunnen...")
+        input = layers.Input(shape=(4096, 52))  # 13 bands × 4×4 patch = 52
+        x = PatchEmbedding(num_patch_x * num_patch_y, embed_dim)(input)
+        x = SwinTransformer(
+            dim=embed_dim,
+            num_patch=(num_patch_x, num_patch_y),
+            num_heads=num_heads,
+            window_size=window_size,
+            shift_size=0,
+            num_mlp=num_mlp,
+            qkv_bias=qkv_bias,
+            dropout_rate=dropout_rate,
+        )(x)
+        x = SwinTransformer(
+            dim=embed_dim,
+            num_patch=(num_patch_x, num_patch_y),
+            num_heads=num_heads,
+            window_size=window_size,
+            shift_size=shift_size,
+            num_mlp=num_mlp,
+            qkv_bias=qkv_bias,
+            dropout_rate=dropout_rate,
+        )(x)
+        x = PatchMerging((num_patch_x, num_patch_y), embed_dim=embed_dim)(x)
+        x = layers.GlobalAveragePooling1D()(x)
+        output = layers.Dense(num_classes, activation="softmax")(x)
 
-    model = keras.Model(input, output)
+        model = keras.Model(input, output)
 
-    model.compile(
-        loss=keras.losses.CategoricalCrossentropy(label_smoothing=label_smoothing),
-        optimizer=keras.optimizers.AdamW(learning_rate=learning_rate, weight_decay=weight_decay),
-        metrics=[
-            keras.metrics.CategoricalAccuracy(name="accuracy"),
-            keras.metrics.TopKCategoricalAccuracy(5, name="top-5-accuracy"),
-        ],
-    )
+        model.compile(
+            loss=keras.losses.CategoricalCrossentropy(label_smoothing=label_smoothing),
+            optimizer=keras.optimizers.AdamW(learning_rate=learning_rate, weight_decay=weight_decay),
+            metrics=[
+                keras.metrics.CategoricalAccuracy(name="accuracy"),
+                keras.metrics.TopKCategoricalAccuracy(5, name="top-5-accuracy"),
+            ],
+        )
 
-    # Tren modellen
-    history = model.fit(
-        dataset,
-        validation_data=dataset_val,
-        epochs=num_epochs,
-        batch_size=batch_size,
-    )
+        # Tren modellen
+        history = model.fit(
+            dataset,
+            validation_data=dataset_val,
+            epochs=num_epochs,
+            batch_size=batch_size,
+        )
 
-    # Lagre modellen
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    model.save(save_path)
-    print(f"Modellen ble lagret til: {save_path}")
+        # Lagre modellen
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        model.save(save_path)
+        print(f"Modellen ble lagret til: {save_path}")
 
-loss, accuracy = model.evaluate(dataset_test)
-print(f"🎯 Test accuracy: {accuracy:.4f}, Test loss: {loss:.4f}")
+    # Evaluer modellen uansett
+    loss, accuracy = model.evaluate(dataset_test)
+    print(f"🎯 Test accuracy: {accuracy:.4f}, Test loss: {loss:.4f}")
