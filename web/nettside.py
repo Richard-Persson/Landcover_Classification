@@ -109,6 +109,7 @@ elif page == "Upload & Predict":
 
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
     if uploaded_file is not None:
+
         # Preprosessering av bildet
         image = Image.open(uploaded_file).resize((128, 128))
         image_array = np.array(image) / 255.0  # Normalize
