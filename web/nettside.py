@@ -13,7 +13,6 @@ import os
 import requests
 import io
 import cv2
-import skimage
 
 # Laster inn env fil
 load_dotenv()
@@ -132,6 +131,7 @@ elif page == "Upload & Predict":
 elif page == "Maps":
     st.text(f"Valgt modell: {valg}")
 
+    model = load_model('CNN_RGB')
     # Function to get a Google Maps satellite image
     def get_google_maps_image(lat, lon, zoom=16, size="400x400", maptype="satellite"):
         url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom={zoom}&size={size}&maptype={maptype}&key={google_maps}"
@@ -161,13 +161,12 @@ elif page == "Maps":
 
     if map_data and "center" in map_data:
         lat, lon = map_data["center"]["lat"], map_data["center"]["lng"]
-        st.write(f"Kartets senter: {lat}, {lon}")
+        st.write(f"Koordinater : {lat}, {lon}")
 
     # Knapp for å hente satellittbilde
     if st.button("Hent satellittbilde"):
         map_image = get_google_maps_image(lat, lon, zoom=18, size="800x800")
 
-        model = load_model('CNN_RGB')
         # TODO Fikse bilde som blir lastet inn, modellene bommer veldig??
         if map_image:
 
